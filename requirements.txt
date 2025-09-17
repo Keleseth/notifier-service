@@ -1,0 +1,6 @@
+django==5.2.6
+djangorestframework==3.16.1
+celery==5.4.0
+redis==5.0.1
+python-dotenv==1.1.1
+requests==2.32.3
