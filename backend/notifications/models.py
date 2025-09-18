@@ -13,7 +13,7 @@ class ContactType(models.TextChoices):
     PHONE_NUMBER = 'phone_number', 'Phone_number'
 
 
-class UserNotificationtSettings(models.Model):
+class UserNotificationSettings(models.Model):
     """
     Модель настроек уведомлений пользователя.
 
@@ -22,7 +22,7 @@ class UserNotificationtSettings(models.Model):
         - preferred_notification_channel, предпочитаемый способ уведомления
         - notification_concent, согласие на получение уведомлений
         - created_ad, дата создания настроек
-        - updated_at, дата обновления настроек
+        - updated_at, дата обновления настроек.
     """
 
     user = models.OneToOneField(
@@ -35,7 +35,7 @@ class UserNotificationtSettings(models.Model):
         choices=ContactType.choices,
         default=ContactType.EMAIL,
     )
-    notification_concent = models.BooleanField(default=True)
+    notification_consent = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -62,7 +62,7 @@ class UserContact(models.Model):
         - is_active, состояние активности контакта на данный момент
         - is_verified, подтвержден ли контакт пользователем
         - create_at, дата создания контакта
-        - updated_at, дата обновления контакта
+        - updated_at, дата обновления контакта.
     """
     user = models.ForeignKey(
         User,
@@ -84,7 +84,7 @@ class UserContact(models.Model):
         help_text='Строка контакта после приведения к стандарту',
     )
     is_active = models.BooleanField(
-        default=False,
+        default=True,
         help_text='Активен ли канал(для сервиса рассылки)',
     )
     is_verified = models.BooleanField(
@@ -109,14 +109,16 @@ class UserContact(models.Model):
             ),
         ]
 
-    def clean(self):
-        """
-        Нормализует и валидирует данные контакта.
-        """
-        # TODO from .utils import normalize_contact, validate_contact
-        # norm = normalize_contact(self.contact_type, self.value)
-        # validate_contact(self.contact_type, norm)
-        # self.normalized_value = norm
+    # def clean(self):
+    #     """
+    #     Нормализует и валидирует данные контакта.
+    #     """
+    #     # TODO добавить приведение к стандарту на уровне базы, пока только 
+    #     # на уровне api
+    #     # from .utils import normalize_contact, validate_contact
+    #     # norm = normalize_contact(self.contact_type, self.value)
+    #     # validate_contact(self.contact_type, norm)
+    #     # self.normalized_value = norm
 
-    def __str__(self):
-        return f'{self.user}:{self.contact_type}-{self.normalized_value}'
+    # def __str__(self):
+    #     return f'{self.user}:{self.contact_type}-{self.normalized_value}'
