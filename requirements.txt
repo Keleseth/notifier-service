@@ -6,3 +6,5 @@ python-dotenv==1.1.1
 requests==2.32.3
 djoser==2.3.3
 djangorestframework-simplejwt==5.5.1
+pytest==7.4.0
+pytest-django==4.5.2
