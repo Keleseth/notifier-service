@@ -55,9 +55,7 @@ class UserNotificationSettings(models.Model):
         ]
 
     def __str__(self):
-        return (
-            f'{self.user}, {self.preferred_notification_channel})'
-        )
+        return f'{self.user}, {self.preferred_notification_channel}'
 
 
 class UserContact(models.Model):
