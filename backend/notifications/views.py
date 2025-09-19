@@ -91,7 +91,7 @@ class MyNorificationView(APIView):
             {
                 'accepted': True,
                 'payload': serializer.data,
-                'queued': True, # Задача поставлена в очередь
+                'queued': True,
             },
             status=status.HTTP_202_ACCEPTED,
         )
