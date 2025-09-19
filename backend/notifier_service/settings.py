@@ -130,3 +130,68 @@ REST_FRAMEWORK = {
         'rest_framework_simplejwt.authentication.JWTAuthentication',
     ),
 }
+
+#
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'handlers': {
+        'file': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': str(BASE_DIR / 'logs' / 'notifier.log'),
+            'encoding': 'utf-8',
+        },
+        'console': {
+            'level': 'DEBUG',
+            'class': 'logging.StreamHandler',
+        },
+        'errors': {
+            'level': 'ERROR',
+            'class': 'logging.FileHandler',
+            'filename': str(BASE_DIR / 'logs' / 'errors.log'),
+            'encoding': 'utf-8',
+        },
+        'tests': {
+            'level': 'DEBUG',
+            'class': 'logging.FileHandler',
+            'filename': str(BASE_DIR / 'logs' / 'test_logs.log'),
+            'encoding': 'utf-8',
+        },
+        'delivery': {
+            'level': 'INFO',
+            'class': 'logging.FileHandler',
+            'filename': str(BASE_DIR / 'logs' / 'delivery.log'),
+            'encoding': 'utf-8',
+        },
+    },
+    'loggers': {
+        '': {
+            'handlers': ['file', 'console', 'errors'],
+            'level': 'INFO',
+        },
+        'notifications': {
+            'handlers': ['file', 'console', 'errors'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+        'notifications.services.delivery_channels': {
+            'handlers': ['delivery', 'console'],
+            'level': 'INFO',
+            'propagate': False,
+        },
+        'tests': {
+            'handlers': ['tests'],
+            'level': 'DEBUG',
+            'propagate': False,
+        },
+    },
+}
+
+# Celery конфигурация
+CELERY_IMPORTS = ("notifications.services.notifications",)
+CELERY_BROKER_URL = 'redis://localhost:6379/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6379/0'
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'

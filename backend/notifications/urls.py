@@ -2,7 +2,8 @@ from django.urls import path
 
 from .views import (
     MyContactsView,
-    MyNotificationSettingsView
+    MyNotificationSettingsView,
+    MyNorificationView
 )
 
 
@@ -13,4 +14,5 @@ urlpatterns = [
         MyNotificationSettingsView.as_view(),
         name='my-notification-settings'
     ),
+    path('me/notifications/', MyNorificationView.as_view(), name='my-notifications'),
 ]

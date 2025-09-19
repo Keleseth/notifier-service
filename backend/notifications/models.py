@@ -43,6 +43,16 @@ class UserNotificationSettings(models.Model):
     class Meta:
         verbose_name = 'настройка уведомления'
         verbose_name_plural = 'Настройки уведомлений'
+        constraints = [
+            models.CheckConstraint(
+                check=models.Q(preferred_notification_channel__in=[
+                    ContactType.EMAIL,
+                    ContactType.TELEGRAM,
+                    ContactType.PHONE_NUMBER
+                ]),
+                name='valid_channel'
+            )
+        ]
 
     def __str__(self):
         return (
@@ -95,6 +105,9 @@ class UserContact(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
+    def __str__(self):
+        return f'{self.user}:{self.contact_type}-{self.normalized_value}'
+
     class Meta:
         ordering = ['contact_type', 'id']
         constraints = [
@@ -109,16 +122,57 @@ class UserContact(models.Model):
             ),
         ]
 
-    # def clean(self):
-    #     """
-    #     Нормализует и валидирует данные контакта.
-    #     """
-    #     # TODO добавить приведение к стандарту на уровне базы, пока только 
-    #     # на уровне api
-    #     # from .utils import normalize_contact, validate_contact
-    #     # norm = normalize_contact(self.contact_type, self.value)
-    #     # validate_contact(self.contact_type, norm)
-    #     # self.normalized_value = norm
 
-    # def __str__(self):
-    #     return f'{self.user}:{self.contact_type}-{self.normalized_value}'
+class NotificationStatus(models.TextChoices):
+    NEW = 'new', 'New'
+    QUEUED = 'queued', 'Queued'
+    PROCESSING = 'processing', 'Processing'
+    SENT = 'sent', 'Sent'
+    FAILED = 'failed', 'Failed'
+    PARTIAL = 'partial', 'Partial'
+
+
+class Notification(models.Model):
+    """
+    Модель уведомления пользователя.
+
+    Поля:
+        - user, ссылка на пользователя
+        - subject, тема уведомления (опционально)
+        - body, текст уведомления (обязательно)
+        - status, статус уведомления (new, queued, sent, failed, partial)
+        - override_channel, канал доставки (опционально)
+        - created_at, дата создания
+        - updated_at, дата обновления.
+    """
+    user = models.ForeignKey(
+        User,
+        on_delete=models.CASCADE,
+        related_name='notifications',
+    )
+    subject = models.CharField(
+        max_length=200,
+        blank=True,
+        null=True,
+    )
+    body = models.TextField()
+    status = models.CharField(
+        max_length=20,
+        choices=NotificationStatus.choices,
+        default=NotificationStatus.NEW,
+    )
+    override_channel = models.CharField(
+        max_length=32,
+        choices=ContactType.choices,
+        blank=True,
+        null=True,
+    )
+    created_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+    updated_at = models.DateTimeField(
+        auto_now=True,
+    )
+
+    def __str__(self):
+        return f'Уведомление для юзера {self.user}- [{self.status}]'
