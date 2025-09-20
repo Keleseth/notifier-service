@@ -82,7 +82,7 @@ class MyNorificationView(APIView):
         serializer = NotificationCreateSerializer(data=request.data)
         serializer = NotificationCreateSerializer(
             data=request.data,
-            context={"request": request},
+            context={'request': request},
         )
         serializer.is_valid(raise_exception=True)
         notification = serializer.save()
@@ -91,7 +91,7 @@ class MyNorificationView(APIView):
             {
                 'accepted': True,
                 'payload': serializer.data,
-                'queued': True, # Задача поставлена в очередь
+                'queued': True,
             },
             status=status.HTTP_202_ACCEPTED,
         )

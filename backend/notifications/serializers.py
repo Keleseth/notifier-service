@@ -134,13 +134,6 @@ class NotificationCreateSerializer(serializers.ModelSerializer):
         },
     )
 
-    # def create(self, validated_data):
-    #     user = self.context['request'].user
-    #     return Notification.objects.create(
-    #         user=user,
-    #         status='new',
-    #         **validated_data
-    #     )
 
     class Meta:
         model = Notification
@@ -154,13 +147,3 @@ class NotificationCreateSerializer(serializers.ModelSerializer):
             "body": {"max_length": 5000,
             "error_messages": {"blank": "Текст уведомления не может быть пустым."}}
         }
-
-
-    # def create(self, validated_data):
-    #     # Пример: создаём Notification, допишите поля по вашей модели
-    #     return Notification.objects.create(
-    #         subject=validated_data.get('notification_subject', ''),
-    #         body=validated_data['body'],
-    #         override_channel=validated_data.get('override_delivery_channel', None),
-    #         user=self.context['request'].user
-    #     )
