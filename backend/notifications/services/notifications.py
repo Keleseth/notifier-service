@@ -7,6 +7,14 @@ from django.db import transaction
 from django.db.models import QuerySet
 from django.utils import timezone
 
+from core.constants import (
+    ALREADY_SENT,
+    NO_CHANNEL_TO_SEND,
+    NO_CONSENT,
+    NO_CONTACTS,
+    NOT_EXISTING_CHANNEL,
+    NOTIFICATION_NOT_FOUND,
+)
 from notifications.models import (
     Notification,
     NotificationStatus,
@@ -31,6 +39,7 @@ Status = Literal[
 class SendResult:
     status: Status
     reason: Optional[str] = None
+    channel: Optional[str] = None
 
 
 class NotificationSender:
@@ -78,10 +87,10 @@ class NotificationSender:
             try:
                 note = cls._get_and_lock_notification(notification_id)
             except Notification.DoesNotExist:
-                return SendResult('not_found', 'Уведомление не найдено')
+                return SendResult('not_found', NOTIFICATION_NOT_FOUND)
 
             if note.status == NotificationStatus.SENT:
-                return SendResult('already_sent', 'Уже отправлено')
+                return SendResult('already_sent', ALREADY_SENT)
 
             settings = getattr(
                 note.user,
@@ -93,18 +102,23 @@ class NotificationSender:
                 'notification_consent',
                 False
             ):
-                return SendResult('no_consent')
+                return SendResult(
+                    'no_consent',
+                    NO_CONSENT
+                )
 
             contacts = cls.get_active_contacts(note.user)
             if not contacts.exists():
-                return SendResult('no_contacts', 'Нет активных контактов')
+                return SendResult('no_contacts', NO_CONTACTS)
 
             # выбор канала
             channel = cls.choose_channel(note, settings)
-            if channel not in DeliveryService.CHANNELS:
-                return SendResult('failed', f'Несуществующий канал {channel}')
+            # сначала проверяем отсутствие канала
             if not channel:
-                return SendResult('failed', 'Нет канала для отправки')
+                return SendResult('failed', NO_CHANNEL_TO_SEND)
+            # затем проверяем валидность канала
+            if channel not in DeliveryService.CHANNELS:
+                return SendResult('failed', NOT_EXISTING_CHANNEL.format(channel))
 
             # пометим processing
             note.status = NotificationStatus.PROCESSING     
@@ -154,7 +168,10 @@ class NotificationSender:
                 note, 'sent_at'
             ): note.sent_at = timezone.now(); fields.append('sent_at')
             note.save(update_fields=fields)
-            return SendResult('sent')
+            return SendResult(
+                status='sent',
+                channel=result.channel,
+            )
         except Exception as e:
             logger.exception('Delivery failed for %s: %s', note.pk, e)
             with transaction.atomic():

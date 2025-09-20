@@ -72,9 +72,9 @@ class DeliveryService:
     """
 
     CHANNELS: ClassVar[Mapping[str, DeliverFunc]] = {
-        "email": send_email,
-        "phone_number": send_sms,
-        "telegram": send_to_telegram,
+        'email': send_email,
+        'phone_number': send_sms,
+        'telegram': send_to_telegram,
     }
 
     @classmethod
@@ -100,34 +100,41 @@ class DeliveryService:
         order = [primary_channel] + [
             ch for ch in fallback_order if ch != primary_channel
         ]
-
         last_error: Optional[str] = None
         for channel in order:
-            fn = cls.CHANNELS.get(channel)
-            if fn is None:
+            print('Функция вошла в цикл по каналам: ------------------------------', channel)
+            send_func = cls.CHANNELS.get(channel)
+            if send_func is None:
                 continue
-            chan_contacts = contacts.filter(contact_type=channel)
-            if not chan_contacts.exists():
+            contacts_for_channel = contacts.filter(contact_type=channel)
+            if not contacts_for_channel.exists():
                 continue
 
-            successes = 0
-            for c in chan_contacts.iterator():
+            contact = contacts_for_channel.first()
+            if contact:
                 try:
-                    ok = fn(c.normalized_value, subject, body)
-                except Exception as e:
-                    logger.error(f'Ошибка отправки через {channel} для {c.normalized_value}: {e}')
-                    ok = False
-                if ok:
-                    successes += 1
+                    is_sent = send_func(
+                        contact.normalized_value,
+                        subject,
+                        body
+                    )
+                except Exception as error:
+                    logger.error(
+                        f'Ошибка отправки через {channel} для {contact.normalized_value}: {error}'
+                    )
+                    is_sent = False
+                if is_sent:
+                    return DeliveryResult(True, channel=channel, sent_count=1)
                 else:
-                    logger.warning(f'Не удалось отправить через {channel} для {c.normalized_value}')
-
-            if successes > 0:
-                return DeliveryResult(True, channel=channel, sent_count=successes)
+                    logger.warning(
+                        f'Не удалось отправить через {channel} для {contact.normalized_value}'
+                    )
 
             logger.info(f'Нет успешных доставок через канал {channel}')
             last_error = f'no successful deliveries via {channel}'
 
-        logger.error(f'Доставка не удалась ни по одному каналу: {last_error or "no contacts / no channels"}')
+        logger.error(
+            f'Доставка не удалась ни по одному каналу: {last_error or "no contacts / no channels"}'
+        )
         return DeliveryResult(False, reason=last_error or 'no contacts / no channels')
 
