@@ -79,8 +79,6 @@ class NotificationSender:
     def get_active_contacts(user) -> QuerySet[UserContact]:
         return user.contacts.filter(is_active=True, is_verified=True)
 
-    # duplicate method removed below; keeping a single definition above
-
     @classmethod
     def process(cls, notification_id: int) -> SendResult:
         with transaction.atomic():
@@ -111,16 +109,12 @@ class NotificationSender:
             if not contacts.exists():
                 return SendResult('no_contacts', NO_CONTACTS)
 
-            # выбор канала
             channel = cls.choose_channel(note, settings)
-            # сначала проверяем отсутствие канала
             if not channel:
                 return SendResult('failed', NO_CHANNEL_TO_SEND)
-            # затем проверяем валидность канала
             if channel not in DeliveryService.CHANNELS:
                 return SendResult('failed', NOT_EXISTING_CHANNEL.format(channel))
 
-            # пометим processing
             note.status = NotificationStatus.PROCESSING     
             if hasattr(note, 'updated_at'):
                 note.updated_at = timezone.now()

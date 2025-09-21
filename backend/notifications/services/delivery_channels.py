@@ -137,4 +137,3 @@ class DeliveryService:
             f'Доставка не удалась ни по одному каналу: {last_error or "no contacts / no channels"}'
         )
         return DeliveryResult(False, reason=last_error or 'no contacts / no channels')
-
